@@ -1,0 +1,12 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "provider": "openai-compatible",
+        "baseUrl": "http://98.91.253.98:8001/v1",
+        "model": "nemotron",
+        "apiKey": "not-needed"
+      }
+    }
+  }
+}

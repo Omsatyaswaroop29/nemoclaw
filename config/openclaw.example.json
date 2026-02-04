@@ -1,0 +1,17 @@
+{
+  "agent": {
+    "model": "nemoclaw/nemotron-3-nano",
+    "modelEndpoint": "http://localhost:8001/v1",
+    "maxTokens": 4096,
+    "temperature": 0.7,
+    "thinkingBudget": 10000
+  },
+  "features": {
+    "toolCalling": true,
+    "streaming": true
+  },
+  "advanced": {
+    "retryAttempts": 3,
+    "timeoutMs": 120000
+  }
+}

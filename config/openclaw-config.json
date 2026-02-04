@@ -1,0 +1,12 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "provider": "openai-compatible",
+        "baseUrl": "http://YOUR_EC2_PUBLIC_IP:8001/v1",
+        "model": "nemotron",
+        "apiKey": "not-needed"
+      }
+    }
+  }
+}

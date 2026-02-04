@@ -1,0 +1,44 @@
+# NemoClaw Systemd Service File
+# Copy this file to /etc/systemd/system/nemoclaw.service
+# Then run: sudo systemctl daemon-reload && sudo systemctl enable nemoclaw
+
+[Unit]
+Description=NemoClaw - Nemotron 3 Nano Inference Server
+Documentation=https://github.com/Omsatyaswaroop29/nemoclaw
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/llama.cpp/build/bin
+
+# Environment variables for CUDA
+Environment="CUDA_HOME=/usr/local/cuda-12.4"
+Environment="PATH=/usr/local/cuda-12.4/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64"
+
+# Server command
+# -m: Path to the model file
+# --host 0.0.0.0: Listen on all interfaces
+# --port 8001: Port to listen on
+# -ngl 99: Offload all layers to GPU
+# -c 32768: Context size in tokens
+ExecStart=/home/ec2-user/llama.cpp/build/bin/llama-server \
+    -m /home/ec2-user/models/Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf \
+    --host 0.0.0.0 \
+    --port 8001 \
+    -ngl 99 \
+    -c 32768
+
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ec2-user/.cache
+
+[Install]
+WantedBy=multi-user.target

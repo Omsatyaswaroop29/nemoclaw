@@ -1,0 +1,36 @@
+{
+  "name": "nemoclaw",
+  "version": "0.1.0",
+  "description": "Run OpenClaw locally for free, forever, with complete privacy using Nemotron 3 Nano",
+  "keywords": [
+    "openclaw",
+    "nemotron",
+    "local-llm",
+    "ai-assistant",
+    "vllm",
+    "llama-cpp",
+    "nvidia",
+    "self-hosted"
+  ],
+  "homepage": "https://github.com/yourusername/nemoclaw#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/nemoclaw.git"
+  },
+  "license": "MIT",
+  "author": "Your Name <your.email@example.com>",
+  "bin": {
+    "nemoclaw": "./bin/nemoclaw.js"
+  },
+  "scripts": {
+    "setup": "./scripts/setup.sh",
+    "configure": "./scripts/configure-openclaw.sh",
+    "health": "./scripts/health-check.sh",
+    "start": "docker compose up -d",
+    "stop": "docker compose down",
+    "logs": "docker compose logs -f"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

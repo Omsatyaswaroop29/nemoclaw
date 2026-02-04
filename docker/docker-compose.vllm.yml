@@ -1,0 +1,86 @@
+# NemoClaw - vLLM Backend
+# Requires: 24GB+ VRAM (RTX 4090, A100, etc.)
+# This provides the fastest inference with full model precision
+
+version: '3.8'
+
+services:
+  nemoclaw-vllm:
+    image: vllm/vllm-openai:latest
+    container_name: nemoclaw-inference
+    
+    # GPU access - requires NVIDIA Container Toolkit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    
+    # Port mapping - OpenClaw connects here
+    ports:
+      - "${NEMOCLAW_PORT:-8001}:8000"
+    
+    # Model storage - persists downloaded models between restarts
+    volumes:
+      - nemoclaw-models:/root/.cache/huggingface
+      - ./config:/config:ro
+    
+    # vLLM server configuration
+    command: >
+      --model nvidia/Nemotron-3-Nano-30B-A3B
+      --dtype auto
+      --trust-remote-code
+      --host 0.0.0.0
+      --port 8000
+      --max-model-len ${NEMOCLAW_MAX_CONTEXT:-131072}
+      --gpu-memory-utilization ${NEMOCLAW_GPU_MEMORY_UTILIZATION:-0.9}
+      --enable-auto-tool-choice
+      --tool-call-parser hermes
+      --served-model-name nemotron-3-nano
+    
+    # Environment variables
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+      - CUDA_VISIBLE_DEVICES=0
+    
+    # Health check - ensures model is loaded and responding
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s  # Model loading takes time
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # Optional: Simple web dashboard for monitoring
+  nemoclaw-dashboard:
+    image: nginx:alpine
+    container_name: nemoclaw-dashboard
+    ports:
+      - "${NEMOCLAW_DASHBOARD_PORT:-8080}:80"
+    volumes:
+      - ./dashboard:/usr/share/nginx/html:ro
+    depends_on:
+      - nemoclaw-vllm
+    restart: unless-stopped
+    profiles:
+      - dashboard  # Only starts with --profile dashboard
+
+volumes:
+  nemoclaw-models:
+    name: nemoclaw-models
+
+networks:
+  default:
+    name: nemoclaw-network

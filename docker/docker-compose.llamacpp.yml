@@ -1,0 +1,100 @@
+# NemoClaw - llama.cpp Backend
+# Requires: 16GB+ VRAM (RTX 4080, RTX 3090, etc.)
+# Uses quantized models for lower memory requirements
+
+version: '3.8'
+
+services:
+  nemoclaw-llamacpp:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: nemoclaw-inference
+    
+    # GPU access - requires NVIDIA Container Toolkit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    
+    # Port mapping - OpenClaw connects here
+    ports:
+      - "${NEMOCLAW_PORT:-8001}:8080"
+    
+    # Model storage - mount your downloaded GGUF model here
+    volumes:
+      - nemoclaw-models:/models
+      - ./config:/config:ro
+    
+    # llama.cpp server configuration
+    # Note: You need to download the GGUF model first (see setup.sh)
+    command: >
+      --model /models/Nemotron-3-Nano-30B-A3B-Q4_K_XL.gguf
+      --host 0.0.0.0
+      --port 8080
+      --ctx-size ${NEMOCLAW_MAX_CONTEXT:-32768}
+      --n-gpu-layers 99
+      --flash-attn
+      --threads 8
+      --parallel 2
+      --cont-batching
+      --metrics
+    
+    # Environment variables  
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s  # Model loading time
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # Model downloader service - runs once to download the GGUF model
+  model-downloader:
+    image: python:3.11-slim
+    container_name: nemoclaw-downloader
+    volumes:
+      - nemoclaw-models:/models
+    command: >
+      bash -c "
+        pip install -q huggingface_hub &&
+        python -c \"
+        from huggingface_hub import hf_hub_download
+        import os
+        model_path = '/models/Nemotron-3-Nano-30B-A3B-Q4_K_XL.gguf'
+        if not os.path.exists(model_path):
+            print('Downloading Nemotron 3 Nano Q4_K_XL...')
+            hf_hub_download(
+                repo_id='unsloth/Nemotron-3-Nano-30B-A3B-GGUF',
+                filename='Nemotron-3-Nano-30B-A3B-Q4_K_XL.gguf',
+                local_dir='/models'
+            )
+            print('Download complete!')
+        else:
+            print('Model already exists, skipping download.')
+        \"
+      "
+    profiles:
+      - download  # Only runs with --profile download
+
+volumes:
+  nemoclaw-models:
+    name: nemoclaw-models
+
+networks:
+  default:
+    name: nemoclaw-network
