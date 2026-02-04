@@ -1,6 +1,32 @@
-# Troubleshooting Guide for NemoClaw
+# Troubleshooting Guide 🔧
 
-This guide covers common issues you may encounter when setting up or running NemoClaw, along with detailed solutions.
+This guide covers common issues you might encounter when setting up or running NemoClaw. Each section includes symptoms, causes, and step-by-step solutions.
+
+---
+
+## Quick Diagnostics
+
+Before diving into specific issues, run these commands to gather system information:
+
+```bash
+# Check if NemoClaw is running
+sudo systemctl status nemoclaw
+
+# View recent logs
+sudo journalctl -u nemoclaw -n 50
+
+# Check GPU status
+nvidia-smi
+
+# Check disk space
+df -h
+
+# Check memory
+free -h
+
+# Test API locally
+curl http://localhost:8001/v1/models
+```
 
 ---
 
@@ -13,13 +39,15 @@ This guide covers common issues you may encounter when setting up or running Nem
 ssh: connect to host XX.XX.XX.XX port 22: Operation timed out
 ```
 
-**Solutions:**
+**Common Causes:**
 
-**Your IP address has changed.** Your home or office IP address can change, especially if you're on a residential internet connection. When this happens, the security group blocks your connection. Visit https://whatismyip.com to find your current IP, then update your security group inbound rules with your new IP address.
+This usually happens because your IP address has changed. Most home internet connections use dynamic IPs that change periodically. When your IP changes, the security group blocks your connection since it's configured to only allow your previous IP.
 
-**Instance is not running.** Check the EC2 console to verify the instance state shows "Running" with a green indicator. If it's stopped, select the instance and choose Instance state and then Start instance.
+**Solution:**
 
-**Wrong IP address.** EC2 public IP addresses change every time you stop and start an instance. Get the current Public IPv4 address from the EC2 console instance details page.
+First, find your current public IP by visiting https://whatismyip.com. Then go to the AWS Console, navigate to EC2, then Security Groups, and find your `nemoclaw-sg` security group. Edit the inbound rules and update the SSH rule's source to your current IP address (or select "My IP" which auto-detects it). Save the rules and try connecting again.
+
+If the instance isn't running, go to EC2, then Instances, select your instance, and check if the state is "Running". If it's stopped, start it and note the new public IP address since EC2 instances get new public IPs each time they start.
 
 ---
 
@@ -30,36 +58,44 @@ ssh: connect to host XX.XX.XX.XX port 22: Operation timed out
 Permission denied (publickey,gssapi-keyex,gssapi-with-mic)
 ```
 
-**Solutions:**
+**Common Causes:**
 
-**Wrong key file permissions.** SSH requires that your private key file has restrictive permissions. Fix the permissions by running:
+This typically means the SSH key file has incorrect permissions, you're using the wrong key file, or you're using the wrong username.
+
+**Solution:**
+
+First, fix the key file permissions. The private key must be readable only by you:
 
 ```bash
 chmod 400 ~/.ssh/nemoclaw-key.pem
 ```
 
-**Wrong username.** Amazon Linux 2023 uses "ec2-user" as the default username. Make sure you're using the correct command:
+Make sure you're using the correct username. For Amazon Linux 2023, the username is `ec2-user`:
 
 ```bash
 ssh -i ~/.ssh/nemoclaw-key.pem ec2-user@YOUR_IP
 ```
 
-**Wrong key file.** Verify you're using the key pair that was selected when launching the instance. You can check which key pair is associated with the instance in the EC2 console under the instance details.
+If you're still having trouble, verify you're using the same key pair that was selected when launching the instance. You can check this in the EC2 console under the instance details.
 
 ---
 
-### Cannot Connect to API Port 8001
+### Cannot Connect to API (Port 8001)
 
 **Symptom:**
 ```
 curl: (7) Failed to connect to XX.XX.XX.XX port 8001: Connection refused
 ```
 
-**Solutions:**
+**Common Causes:**
 
-**Security group doesn't allow port 8001.** Go to EC2, then Security Groups, select nemoclaw-sg, and verify there's an inbound rule for Custom TCP on port 8001 from your IP. If not, add it.
+This happens when the security group doesn't allow traffic on port 8001, the NemoClaw service isn't running, or the server is still loading the model.
 
-**NemoClaw service isn't running.** SSH into the instance and check the service status:
+**Solution:**
+
+First, check if the security group allows port 8001. Go to EC2, then Security Groups, select `nemoclaw-sg`, and verify there's an inbound rule for Custom TCP on port 8001 from your IP. If not, add it.
+
+Next, SSH into the instance and check if NemoClaw is running:
 
 ```bash
 sudo systemctl status nemoclaw
@@ -71,13 +107,13 @@ If it's not running, start it:
 sudo systemctl start nemoclaw
 ```
 
-**Server is still loading the model.** The 21GB model takes 60-90 seconds to load into GPU memory after the service starts. Wait a couple of minutes after starting the service, then try again. You can monitor the loading progress by watching the logs:
+The model takes 60-90 seconds to load after the service starts. Watch the logs to see when it's ready:
 
 ```bash
 sudo journalctl -u nemoclaw -f
 ```
 
-Look for the message "server is listening on http://0.0.0.0:8001" which indicates the server is ready.
+Look for the message "server is listening on http://0.0.0.0:8001" which indicates the server is ready to accept requests.
 
 ---
 
@@ -92,17 +128,28 @@ Error: Unable to find a match: cuda-toolkit-12-4
 
 **Solution:**
 
-The NVIDIA repository might not have been added correctly. Run these commands manually:
+The NVIDIA repository might not have been added correctly. Try adding it manually:
 
 ```bash
-sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+sudo dnf config-manager --add-repo \
+    https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
 sudo dnf clean all
+sudo dnf makecache
 sudo dnf install -y cuda-toolkit-12-4
+```
+
+If you're on Ubuntu instead of Amazon Linux, use the appropriate repository:
+
+```bash
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12-4
 ```
 
 ---
 
-### llama.cpp Build Fails with CMake Errors
+### llama.cpp Build Fails
 
 **Symptom:**
 ```
@@ -116,19 +163,21 @@ The CUDA environment variables aren't set. Set them explicitly before building:
 ```bash
 export CUDA_HOME=/usr/local/cuda-12.4
 export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-cd ~/llama.cpp/build
-rm -rf *
-
+# Now rebuild
+cd ~/llama.cpp
+rm -rf build
+mkdir build && cd build
 cmake .. -DGGML_CUDA=ON -DCUDAToolkit_ROOT=/usr/local/cuda-12.4
-cmake --build . --config Release -j4
+cmake --build . --config Release -j$(nproc)
 ```
 
 ---
 
-### Model Download Fails or Is Incomplete
+### Model Download Interrupted
 
-**Symptom:** The download stops partway through, or the file size is smaller than expected (should be approximately 21GB).
+**Symptom:** The download stopped partway through, or the model file is smaller than expected (should be ~21GB).
 
 **Solution:**
 
@@ -138,14 +187,23 @@ Delete the incomplete file and restart the download:
 cd ~/models
 rm -f Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf
 
-wget -O Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf "https://huggingface.co/unsloth/Nemotron-3-Nano-30B-A3B-GGUF/resolve/main/Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf"
+# Resume download (wget can resume interrupted downloads)
+wget -c -O Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf \
+    "https://huggingface.co/unsloth/Nemotron-3-Nano-30B-A3B-GGUF/resolve/main/Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf"
+```
+
+Verify the downloaded file size:
+
+```bash
+ls -lh ~/models/
+# Should show approximately 21GB
 ```
 
 ---
 
-## Server Startup Issues
+## Server Issues
 
-### Service Fails to Start
+### Service Won't Start
 
 **Symptom:**
 ```
@@ -155,25 +213,28 @@ wget -O Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf "https://huggingface.co/unsloth/
 
 **Solution:**
 
-Check the detailed logs to see what went wrong:
+Check the detailed logs to understand what went wrong:
 
 ```bash
-sudo journalctl -u nemoclaw -n 100
+sudo journalctl -u nemoclaw -n 100 --no-pager
 ```
 
-Verify the model file exists and has the correct size:
+Common causes include the model file not existing (verify with `ls -la ~/models/`), incorrect paths in the service file, or insufficient GPU memory.
+
+If the model file is missing or corrupted, re-download it. If paths are wrong, edit the service file:
 
 ```bash
-ls -la ~/models/Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf
+sudo nano /etc/systemd/system/nemoclaw.service
+# Verify all paths point to correct locations
+sudo systemctl daemon-reload
+sudo systemctl start nemoclaw
 ```
-
-The file should be approximately 21GB (around 22,833,947,424 bytes). If it's significantly smaller, the download was incomplete.
 
 ---
 
 ### "Loading Model" Error Persists
 
-**Symptom:** The API returns `{"error":{"message":"Loading model"}}` for more than 2-3 minutes.
+**Symptom:** The API keeps returning `{"error":{"message":"Loading model"}}` for more than 3 minutes.
 
 **Solution:**
 
@@ -183,27 +244,14 @@ The model loading might have stalled. Check the logs for errors:
 sudo journalctl -u nemoclaw -f
 ```
 
-If you see errors related to memory or CUDA, restart the service:
+If you see memory-related errors, the model might not fit. The A10G has 24GB VRAM and the model uses about 21.5GB, leaving limited headroom. Try reducing the context size:
 
 ```bash
+sudo nano /etc/systemd/system/nemoclaw.service
+# Change -c 32768 to -c 16384 or -c 8192
+sudo systemctl daemon-reload
 sudo systemctl restart nemoclaw
 ```
-
-If the problem persists, try running the server manually to see detailed output:
-
-```bash
-sudo systemctl stop nemoclaw
-
-cd ~/llama.cpp/build/bin
-./llama-server \
-  -m ~/models/Nemotron-3-Nano-30B-A3B-UD-Q4_K_XL.gguf \
-  --host 0.0.0.0 \
-  --port 8001 \
-  -ngl 99 \
-  -c 32768
-```
-
-Watch the output for any error messages that indicate what's failing.
 
 ---
 
@@ -216,17 +264,14 @@ CUDA out of memory. Tried to allocate X MiB.
 
 **Solution:**
 
-The context size is too large for the available GPU memory. The A10G has 24GB, and the model uses about 21.5GB, leaving limited room for context.
+This happens when you try to use a context size that's too large for the remaining GPU memory. The model uses ~21.5GB, leaving about 2.5GB on a 24GB card.
 
-Reduce the context size in the service file:
+Reduce the context size in the service configuration:
 
 ```bash
 sudo nano /etc/systemd/system/nemoclaw.service
-```
-
-Find the ExecStart line and change `-c 32768` to `-c 16384` or even `-c 8192`. Then reload and restart:
-
-```bash
+# Find the line with -c 32768
+# Change to -c 16384 or -c 8192
 sudo systemctl daemon-reload
 sudo systemctl restart nemoclaw
 ```
@@ -237,55 +282,7 @@ Also check if other processes are using GPU memory:
 nvidia-smi
 ```
 
-Kill any processes that shouldn't be running on the GPU.
-
----
-
-## Performance Issues
-
-### Slow Inference Speed
-
-**Symptom:** Responses are much slower than the expected 120+ tokens per second.
-
-**Solution:**
-
-First, verify that the model is running on the GPU, not CPU:
-
-```bash
-nvidia-smi
-```
-
-During inference, you should see GPU utilization increase. If GPU-Util stays at 0%, the model might be running on CPU instead.
-
-Check the logs to verify all layers were offloaded to GPU:
-
-```bash
-sudo journalctl -u nemoclaw | grep "offloaded"
-```
-
-You should see "offloaded 53/53 layers to GPU". If fewer layers are offloaded, the `-ngl` parameter might not be set correctly.
-
----
-
-## API Issues
-
-### Invalid JSON Response
-
-**Symptom:** The API returns malformed JSON or the response is cut off.
-
-**Solution:**
-
-This can happen if the max_tokens parameter is set too low. Increase max_tokens in your request:
-
-```bash
-curl http://localhost:8001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "nemotron",
-    "messages": [{"role": "user", "content": "Hello"}],
-    "max_tokens": 1000
-  }'
-```
+Kill any unnecessary processes using GPU memory, or reboot the instance to clear everything.
 
 ---
 
@@ -293,45 +290,107 @@ curl http://localhost:8001/v1/chat/completions \
 
 ### OpenClaw Can't Connect to NemoClaw
 
-**Symptom:** OpenClaw shows connection errors when trying to use the NemoClaw backend.
+**Symptom:** OpenClaw shows connection errors or the bot doesn't respond on Telegram.
 
 **Solution:**
 
-First, test that NemoClaw is accessible from your local machine:
+First verify NemoClaw is accessible from your local machine:
 
 ```bash
 curl http://YOUR_EC2_IP:8001/v1/models
 ```
 
-If this works, the issue is likely in the OpenClaw configuration. Check your config file at `~/.openclaw/config.json` and ensure it matches this structure:
+If this times out, check your security group settings and your current IP address.
+
+If the curl works but OpenClaw doesn't, check your OpenClaw configuration file at `~/.openclaw/openclaw.json`. Make sure you have the correct structure:
 
 ```json
 {
+  "models": {
+    "providers": {
+      "nemoclaw": {
+        "baseUrl": "http://YOUR_EC2_IP:8001/v1",
+        "apiKey": "not-needed",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "nemotron",
+            "name": "Nemotron 3 Nano",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 32768,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
   "agents": {
     "defaults": {
       "model": {
-        "provider": "openai-compatible",
-        "baseUrl": "http://YOUR_EC2_IP:8001/v1",
-        "model": "nemotron",
-        "apiKey": "not-needed"
+        "primary": "nemoclaw/nemotron"
       }
     }
   }
 }
 ```
 
-Common mistakes include forgetting the `/v1` at the end of the baseUrl, using `https` instead of `http`, or having a trailing slash.
+Common mistakes include forgetting `/v1` at the end of the baseUrl, using `https` instead of `http`, having a trailing slash, or using incorrect provider name in the model primary field.
+
+After fixing, restart OpenClaw:
+
+```bash
+openclaw gateway restart
+```
 
 ---
 
-## Getting Help
+### Slow Response Times
 
-If you've tried the solutions in this guide and are still experiencing issues, here's how to get additional help.
+**Symptom:** The bot takes a long time to respond, much longer than expected.
 
-### Information to Include When Asking for Help
+**Solution:**
 
-When reporting an issue, include the exact error message or symptom, the output of `sudo systemctl status nemoclaw`, relevant log lines from `sudo journalctl -u nemoclaw -n 50`, the output of `nvidia-smi`, your AWS region and instance type, and any recent changes you made before the issue started.
+Some delay is normal due to network latency (your message travels from your phone to Telegram to your Mac to AWS and back). However, if responses are extremely slow:
 
-### Where to Get Help
+Check GPU utilization during inference:
 
-Open an issue at https://github.com/Omsatyaswaroop29/nemoclaw/issues with the information listed above.
+```bash
+nvidia-smi -l 1  # Updates every second
+```
+
+During generation, GPU utilization should spike. If it stays at 0%, the model might not be using the GPU correctly.
+
+Verify all layers are on GPU by checking the logs:
+
+```bash
+sudo journalctl -u nemoclaw | grep "offloaded"
+# Should show: offloaded 53/53 layers to GPU
+```
+
+If network latency is the issue, consider whether your EC2 region is geographically far from you. Launching in a closer region could help.
+
+---
+
+## Cost Issues
+
+### Unexpected High AWS Bill
+
+**Solution:**
+
+Remember that g5.xlarge costs ~$1/hour when running! If you left it running for a month, that's ~$730.
+
+Always stop your instance when not in use:
+
+AWS Console → EC2 → Instances → Select instance → Instance state → Stop instance
+
+Set up billing alerts to get notified before costs get too high. Go to AWS Budgets and create a budget alert for your expected monthly spend.
+
+The EBS storage (~$8/month for 100GB) continues to charge even when the instance is stopped. This is normal and expected since your data persists.
+
+---
+
+## Getting More Help
+
+If you've tried the solutions in this guide and are still stuck, you can open an issue at https://github.com/Omsatyaswaroop29/nemoclaw/issues. When reporting issues, please include the exact error message, output of `sudo systemctl status nemoclaw`, relevant log lines from `sudo journalctl -u nemoclaw -n 50`, output of `nvidia-smi`, your AWS region and instance type, and what you were doing when the error occurred.

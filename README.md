@@ -1,450 +1,459 @@
-<p align="center">
-  <h1 align="center">🦞 NemoClaw</h1>
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>Self-Hosted AI Inference Server for OpenClaw</strong><br>
-  Run Nemotron 3 Nano locally • Cut API costs by 90% • Keep your data private
-</p>
+# 🦞 NemoClaw
 
-<p align="center">
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#-configuration">Configuration</a> •
-  <a href="#-api-reference">API Reference</a> •
-  <a href="#-troubleshooting">Troubleshooting</a>
-</p>
+### **Self-Hosted AI That Lives in Your Pocket**
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Model-Nemotron%203%20Nano%2030B-green?style=flat-square" alt="Model"/>
-  <img src="https://img.shields.io/badge/Context-1M%20Tokens-blue?style=flat-square" alt="Context"/>
-  <img src="https://img.shields.io/badge/Speed-120%2B%20tok%2Fs-orange?style=flat-square" alt="Speed"/>
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License"/>
-</p>
+*Run a 30-billion parameter AI on your own server. Chat with it on Telegram. Pay $0 per token.*
 
----
+[![Model](https://img.shields.io/badge/Model-Nemotron%203%20Nano%2030B-00D4AA?style=for-the-badge&logo=nvidia&logoColor=white)](https://huggingface.co/nvidia/Nemotron-3-Nano-30B-A3B)
+[![Context](https://img.shields.io/badge/Context-1M%20Tokens-blue?style=for-the-badge&logo=openai&logoColor=white)](https://github.com/Omsatyaswaroop29/nemoclaw)
+[![Speed](https://img.shields.io/badge/Speed-120%2B%20tok%2Fs-orange?style=for-the-badge&logo=lightning&logoColor=white)](https://github.com/Omsatyaswaroop29/nemoclaw)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![OpenClaw](https://img.shields.io/badge/Powered%20by-OpenClaw-red?style=for-the-badge&logo=lobster&logoColor=white)](https://openclaw.ai)
 
-## 📋 Table of Contents
+<br/>
 
-1. [Overview](#-overview)
-2. [Why NemoClaw?](#-why-nemoclaw)
-3. [Quick Start](#-quick-start)
-4. [System Requirements](#-system-requirements)
-5. [Installation](#-installation)
-6. [Configuration](#-configuration)
-7. [API Reference](#-api-reference)
-8. [Management Commands](#-management-commands)
-9. [Cost Analysis](#-cost-analysis)
-10. [Troubleshooting](#-troubleshooting)
-11. [Contributing](#-contributing)
-12. [License](#-license)
+[**🚀 Quick Start**](#-quick-start) • [**📖 Documentation**](#-full-installation-guide) • [**💬 Join Discord**](https://discord.gg/openclaw) • [**🐛 Report Bug**](https://github.com/Omsatyaswaroop29/nemoclaw/issues)
+
+<br/>
+
+<img src="https://github.com/user-attachments/assets/nemoclaw-demo.gif" alt="NemoClaw Demo" width="600"/>
+
+*Your AI assistant, running on your hardware, responding on Telegram*
+
+</div>
 
 ---
 
-## 🎯 Overview
+## 🎯 What is NemoClaw?
 
-**NemoClaw** is a production-ready deployment package that runs NVIDIA's Nemotron 3 Nano model on your own AWS infrastructure. It provides an OpenAI-compatible API endpoint that integrates seamlessly with OpenClaw, eliminating expensive cloud API subscriptions while keeping your data completely private.
+**NemoClaw** transforms your AWS GPU instance into a personal AI powerhouse. It's a production-ready deployment that runs **NVIDIA's Nemotron 3 Nano** (30 billion parameters!) and connects it to messaging apps through **OpenClaw**.
 
-### What You Get
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    YOUR APPLICATIONS                         │
-│          (OpenClaw, ChatUI, Custom Apps, etc.)              │
-└─────────────────────────────┬───────────────────────────────┘
-                              │ HTTP/REST API
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      NEMOCLAW SERVER                         │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │            OpenAI-Compatible API Layer               │   │
-│  │              http://your-ip:8001/v1                  │   │
-│  └─────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              llama.cpp Inference Engine              │   │
-│  │          (Optimized for NVIDIA GPUs + CUDA)          │   │
-│  └─────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              Nemotron 3 Nano Model                   │   │
-│  │     30B Parameters • 1M Context • Q4 Quantized       │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     AWS EC2 g5.xlarge                        │
-│              NVIDIA A10G GPU (24GB VRAM)                     │
-└─────────────────────────────────────────────────────────────┘
-```
+**The result?** A ChatGPT-like assistant that:
+- 💰 Costs **$0 per message** (just ~$30-60/month for AWS)
+- 🔒 Keeps **100% of your data** on your own server
+- 📱 Works on **Telegram, WhatsApp, Discord, Slack**, and 14+ platforms
+- 🧠 Has a **1 million token context window** (process entire codebases!)
+- ⚡ Responds at **120+ tokens per second**
 
 ---
 
-## 💡 Why NemoClaw?
+## 💡 The Problem We're Solving
 
-### The Problem
+If you're using OpenClaw (the amazing open-source AI agent), you know the pain:
 
-OpenClaw users typically spend **$300-750/month** on Claude or GPT-4 API costs. For heavy users, costs can exceed $1000/month. Your sensitive data also gets sent to third-party servers.
+| The Reality of AI APIs | Monthly Cost |
+|------------------------|--------------|
+| Claude Opus for power users | $300 - $750+ |
+| GPT-4 for daily use | $200 - $500 |
+| "Light" API usage | Still $50 - $150 |
 
-### The Solution
+**That's $600 - $9,000 per year** just to chat with an AI.
 
-NemoClaw runs a powerful open-source model on your own infrastructure:
+### Enter NemoClaw
 
-| Aspect | Cloud APIs (Claude/GPT-4) | NemoClaw |
-|--------|---------------------------|----------|
-| **Monthly Cost** | $300 - $750+ | **$30 - $60** |
-| **Cost per Token** | $0.003 - $0.015 | **$0** |
-| **Data Privacy** | Sent to third parties | **100% on your server** |
-| **Context Window** | 128K - 200K tokens | **1,000,000 tokens** |
-| **Rate Limits** | Yes, can interrupt workflows | **None** |
-| **Uptime Dependency** | Relies on provider | **You control it** |
+| NemoClaw | Monthly Cost |
+|----------|--------------|
+| Run 1 hour/day | ~$38 |
+| Run 2 hours/day | ~$68 |
+| Run 4 hours/day | ~$129 |
+| **Cost per token** | **$0.00** |
 
-### Who Is This For?
-
-- ✅ **OpenClaw users** wanting to reduce API costs
-- ✅ **Developers** building AI applications without per-token fees
-- ✅ **Privacy-conscious users** who can't send data to external APIs
-- ✅ **Teams** needing unlimited AI access without budget constraints
-- ✅ **Researchers** processing large documents (1M token context!)
+**One-time setup. Unlimited conversations. Your data never leaves your server.**
 
 ---
 
 ## ⚡ Quick Start
 
-For experienced users who want to get running in 10 minutes:
+Get your own AI assistant running in **under 30 minutes**.
+
+### Prerequisites
+
+- AWS account with ~$50 credits (or willingness to pay ~$1/hour while running)
+- Basic terminal knowledge
+- A Telegram account (for the easiest setup)
+
+### Step 1: Launch AWS Instance
 
 ```bash
-# 1. Launch EC2 g5.xlarge with "Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.9 (Amazon Linux 2023)"
-# 2. Open ports 22 (SSH) and 8001 (API) in security group
-# 3. SSH into your instance:
-ssh -i your-key.pem ec2-user@YOUR_INSTANCE_IP
-
-# 4. Run the one-line installer:
-curl -sSL https://raw.githubusercontent.com/Omsatyaswaroop29/nemoclaw/main/scripts/install.sh | bash
-
-# 5. Wait ~20 minutes for download and setup, then test:
-curl http://localhost:8001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"nemotron","messages":[{"role":"user","content":"Hello! Who are you?"}]}'
+# Instance: g5.xlarge (NVIDIA A10G GPU, 24GB VRAM)
+# AMI: Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.9 (Amazon Linux 2023)
+# Storage: 100GB gp3
+# Security Group: Open ports 22 (SSH) and 8001 (API) to your IP
 ```
 
-**New to AWS or want detailed guidance?** See the [full installation guide](docs/AWS_SETUP_GUIDE.md).
-
----
-
-## 💻 System Requirements
-
-### AWS Infrastructure (Recommended)
-
-| Component | Specification | Why |
-|-----------|---------------|-----|
-| **Instance Type** | g5.xlarge | Best price/performance for 30B models |
-| **GPU** | NVIDIA A10G (24GB VRAM) | Fits the 21GB quantized model |
-| **vCPUs** | 4 | Sufficient for inference workloads |
-| **RAM** | 16 GB | Handles model loading and requests |
-| **Storage** | 100 GB gp3 SSD | Model (21GB) + system + logs |
-| **AMI** | Amazon Linux 2023 Deep Learning | Pre-installed NVIDIA drivers |
-
-### Alternative Hardware
-
-NemoClaw can run on any system with:
-
-- **Minimum 24GB VRAM** (RTX 4090, RTX 6000, A10G, A100)
-- **NVIDIA GPU with CUDA support** (Compute capability 7.0+)
-- **50GB free disk space** (for model + llama.cpp)
-- **Linux operating system** (Ubuntu 22.04 or Amazon Linux 2023 recommended)
-
----
-
-## 🚀 Installation
-
-### Step 1: AWS Account Setup
-
-**Request GPU Quota (First-Time Only):**
-
-1. Sign in to the AWS Console
-2. Navigate to **Service Quotas** → **Amazon EC2**
-3. Search for **"Running On-Demand G and VT instances"**
-4. Request increase to **4** vCPUs
-5. Wait for approval (usually 15-30 minutes)
-
-**Create SSH Key Pair:**
-
-1. Go to **EC2 → Key Pairs**
-2. Create key pair named `nemoclaw-key`
-3. Download the `.pem` file
-4. Set permissions: `chmod 400 ~/.ssh/nemoclaw-key.pem`
-
-### Step 2: Launch EC2 Instance
-
-1. Go to **EC2 → Launch Instance**
-2. **Name:** `nemoclaw-server`
-3. **AMI:** Search for "Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.9 (Amazon Linux 2023)"
-4. **Instance type:** `g5.xlarge`
-5. **Key pair:** Select `nemoclaw-key`
-6. **Security group:** Create new with:
-   - SSH (port 22) from My IP
-   - Custom TCP (port 8001) from My IP
-7. **Storage:** 100 GiB gp3
-8. Click **Launch Instance**
-
-### Step 3: Install NemoClaw
+### Step 2: Install NemoClaw (One Command!)
 
 ```bash
-# Connect to your instance
-ssh -i ~/.ssh/nemoclaw-key.pem ec2-user@YOUR_INSTANCE_IP
+ssh -i your-key.pem ec2-user@YOUR_EC2_IP
 
-# Run the installer
+# Run the installer - it handles everything
 curl -sSL https://raw.githubusercontent.com/Omsatyaswaroop29/nemoclaw/main/scripts/install.sh | bash
 ```
 
 The installer will:
-1. Install CUDA Toolkit 12.4
-2. Clone and build llama.cpp with GPU support
-3. Download Nemotron 3 Nano (21GB)
-4. Create and start the systemd service
+- ✅ Install CUDA Toolkit
+- ✅ Build llama.cpp with GPU acceleration
+- ✅ Download Nemotron 3 Nano (21GB model)
+- ✅ Configure auto-starting systemd service
+- ✅ Launch the API server
 
-**Expected time:** 20-30 minutes (model download is the longest step)
+**Time:** ~20-25 minutes (mostly model download)
 
-### Step 4: Verify Installation
+### Step 3: Connect OpenClaw
+
+On your local machine:
 
 ```bash
-# Check service status
-sudo systemctl status nemoclaw
+# Install OpenClaw
+npm install -g openclaw@latest
 
-# Test the API (wait 60-90 seconds for model to load)
-curl http://localhost:8001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"nemotron","messages":[{"role":"user","content":"Hello!"}]}'
+# Run setup wizard
+openclaw onboard
 ```
 
-For detailed step-by-step instructions with screenshots, see [AWS Setup Guide](docs/AWS_SETUP_GUIDE.md).
+When asked about the model provider, we'll configure it to use your NemoClaw server. See [OpenClaw Configuration](#-openclaw-configuration) below.
+
+### Step 4: Chat on Telegram! 🎉
+
+Create a bot with [@BotFather](https://t.me/botfather), connect it during OpenClaw setup, and start chatting!
 
 ---
 
-## ⚙️ Configuration
+## 🏗️ Architecture
 
-### OpenClaw Integration
-
-Edit your OpenClaw config file:
-
-```bash
-nano ~/.openclaw/config.json
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                        YOUR PHONE / DESKTOP                         │
+│              Telegram • WhatsApp • Discord • Slack                  │
+└────────────────────────────────┬───────────────────────────────────┘
+                                 │
+                                 │ Messages (encrypted)
+                                 ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                     OPENCLAW GATEWAY                                │
+│                    (runs on your Mac/PC)                            │
+│                                                                     │
+│   • Receives messages from all platforms                            │
+│   • Routes to AI backend                                            │
+│   • Manages sessions & memory                                       │
+│   • Returns responses                                               │
+└────────────────────────────────┬───────────────────────────────────┘
+                                 │
+                                 │ OpenAI-compatible API
+                                 ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                     NEMOCLAW SERVER                                 │
+│                   (AWS EC2 g5.xlarge)                               │
+│                                                                     │
+│   ┌──────────────────────────────────────────────────────────┐     │
+│   │              llama.cpp + CUDA                             │     │
+│   │         (GPU-accelerated inference engine)                │     │
+│   └──────────────────────────────────────────────────────────┘     │
+│                              │                                      │
+│   ┌──────────────────────────────────────────────────────────┐     │
+│   │           Nemotron 3 Nano 30B (Q4_K_XL)                   │     │
+│   │                                                           │     │
+│   │   • 31.58B total parameters                               │     │
+│   │   • 3.5B active (MoE architecture)                        │     │
+│   │   • 1M token context window                               │     │
+│   │   • 120+ tokens/second generation                         │     │
+│   └──────────────────────────────────────────────────────────┘     │
+│                                                                     │
+│                    NVIDIA A10G (24GB VRAM)                          │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
-Add the NemoClaw provider:
+---
+
+## 📊 Performance
+
+Real benchmarks from our production deployment:
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Model** | Nemotron 3 Nano 30B | NVIDIA's latest open model |
+| **Quantization** | Q4_K_XL (4-bit) | Best quality/size tradeoff |
+| **Parameters** | 31.58B total, 3.5B active | Mixture of Experts |
+| **Generation Speed** | 120+ tokens/sec | Tested on A10G |
+| **Prompt Processing** | 85+ tokens/sec | Initial context |
+| **Time to First Token** | ~200ms | After model loaded |
+| **GPU Memory** | 21.5GB / 24GB | Leaves room for context |
+| **Max Context** | 1,048,576 tokens | Yes, 1 MILLION |
+| **Default Context** | 32,768 tokens | Adjustable |
+| **Concurrent Users** | 4 slots | Configurable |
+
+---
+
+## 💰 Cost Breakdown
+
+### AWS Costs (US East Region)
+
+| Resource | Hourly | Monthly (2hr/day) | Monthly (24/7) |
+|----------|--------|-------------------|----------------|
+| g5.xlarge instance | $1.006 | ~$60 | ~$725 |
+| 100GB gp3 storage | - | ~$8 | ~$8 |
+| Data transfer | - | ~$2 | ~$10 |
+| **Total** | - | **~$70** | **~$743** |
+
+### Savings vs Cloud APIs
+
+| Usage Level | Claude/GPT-4 Cost | NemoClaw Cost | Annual Savings |
+|-------------|-------------------|---------------|----------------|
+| Light | $150/mo | $38/mo | **$1,344/year** |
+| Moderate | $400/mo | $70/mo | **$3,960/year** |
+| Heavy | $750/mo | $129/mo | **$7,452/year** |
+
+**💡 Pro Tip:** Stop your instance when not in use. The model reloads in ~90 seconds when you start it again.
+
+---
+
+## 🔧 OpenClaw Configuration
+
+After running `openclaw onboard`, you need to point it to your NemoClaw server.
+
+Edit `~/.openclaw/openclaw.json` and add this `models` section:
 
 ```json
 {
+  "models": {
+    "providers": {
+      "nemoclaw": {
+        "baseUrl": "http://YOUR_EC2_IP:8001/v1",
+        "apiKey": "not-needed",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "nemotron",
+            "name": "Nemotron 3 Nano 30B",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 32768,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
   "agents": {
     "defaults": {
       "model": {
-        "provider": "openai-compatible",
-        "baseUrl": "http://YOUR_INSTANCE_IP:8001/v1",
-        "model": "nemotron",
-        "apiKey": "not-needed"
+        "primary": "nemoclaw/nemotron"
       }
     }
   }
 }
 ```
 
-### Server Configuration
-
-The NemoClaw server supports various configuration options. To modify, edit the service file:
+Then restart the gateway:
 
 ```bash
-sudo nano /etc/systemd/system/nemoclaw.service
-```
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `-m` | (required) | Path to the model file |
-| `--host` | `0.0.0.0` | Bind address |
-| `--port` | `8001` | API server port |
-| `-ngl` | `99` | GPU layers (99 = all) |
-| `-c` | `32768` | Context size (max 1048576) |
-
-After editing:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart nemoclaw
-```
-
----
-
-## 📡 API Reference
-
-NemoClaw provides a fully OpenAI-compatible API.
-
-### Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/models` | GET | List available models |
-| `/v1/chat/completions` | POST | Generate chat completions |
-| `/v1/completions` | POST | Generate text completions |
-| `/health` | GET | Health check endpoint |
-
-### Chat Completions
-
-```bash
-curl http://YOUR_IP:8001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "nemotron",
-    "messages": [
-      {"role": "system", "content": "You are a helpful assistant."},
-      {"role": "user", "content": "Explain quantum computing in simple terms."}
-    ],
-    "temperature": 0.7,
-    "max_tokens": 500
-  }'
-```
-
-### Streaming Responses
-
-```bash
-curl http://YOUR_IP:8001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "nemotron",
-    "messages": [{"role": "user", "content": "Write a haiku about coding."}],
-    "stream": true
-  }'
+openclaw gateway restart
 ```
 
 ---
 
 ## 🛠️ Management Commands
 
-### Service Control
+### On Your EC2 Instance
 
 ```bash
-sudo systemctl start nemoclaw      # Start the server
-sudo systemctl stop nemoclaw       # Stop the server
-sudo systemctl restart nemoclaw    # Restart the server
-sudo systemctl status nemoclaw     # Check status
+# Check server status
+sudo systemctl status nemoclaw
+
+# View live logs
+sudo journalctl -u nemoclaw -f
+
+# Restart the server
+sudo systemctl restart nemoclaw
+
+# Stop the server
+sudo systemctl stop nemoclaw
+
+# Check GPU usage
+nvidia-smi
 ```
 
-### Viewing Logs
+### On Your Local Machine
 
 ```bash
-sudo journalctl -u nemoclaw -f           # Stream live logs
-sudo journalctl -u nemoclaw -n 100       # Last 100 lines
-sudo journalctl -u nemoclaw --since today # Today's logs
-```
+# Test the API directly
+curl http://YOUR_EC2_IP:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nemotron",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
 
-### Health Monitoring
-
-```bash
-curl http://localhost:8001/v1/models     # Check API
-nvidia-smi                                # Check GPU
+# OpenClaw commands
+openclaw gateway status
+openclaw gateway restart
+openclaw pairing list
 ```
 
 ---
 
-## 💰 Cost Analysis
+## 📁 Project Structure
 
-### AWS Running Costs
-
-| Usage Pattern | Hours/Month | Monthly Cost |
-|---------------|-------------|--------------|
-| Light (1 hr/day) | 30 | ~$38 |
-| Moderate (2 hr/day) | 60 | ~$68 |
-| Heavy (4 hr/day) | 120 | ~$129 |
-| Always On (24/7) | 720 | ~$733 |
-
-(Includes ~$8/month for 100GB storage)
-
-### ⚠️ Cost Management
-
-**CRITICAL: Stop your instance when not in use!**
-
-```bash
-# From AWS Console:
-# EC2 → Instances → Select instance → Instance state → Stop instance
 ```
-
-| Instance State | EC2 Charge | Storage Charge |
-|----------------|------------|----------------|
-| Running | ✅ Yes ($1.01/hr) | ✅ Yes |
-| Stopped | ❌ No | ✅ Yes |
+nemoclaw/
+├── 📄 README.md              # You are here!
+├── 📄 LICENSE                # MIT License
+├── 📄 CONTRIBUTING.md        # Contribution guidelines
+├── 📄 CHANGELOG.md           # Version history
+│
+├── 📁 scripts/
+│   ├── install.sh           # 🚀 One-command installer
+│   ├── health-check.sh      # Server health monitoring
+│   └── configure-openclaw.sh # OpenClaw setup helper
+│
+├── 📁 config/
+│   ├── nemoclaw.service     # Systemd service file
+│   └── openclaw-config.json # Example OpenClaw config
+│
+└── 📁 docs/
+    ├── AWS_SETUP_GUIDE.md   # Detailed AWS walkthrough
+    ├── TROUBLESHOOTING.md   # Common issues & fixes
+    └── CHEAT_SHEET.md       # Quick reference card
+```
 
 ---
 
 ## 🔍 Troubleshooting
 
-### Common Issues
+<details>
+<summary><b>❌ "Connection refused" when calling the API</b></summary>
 
-**SSH Connection Timeout:**
-- Your IP may have changed. Update security group with current IP.
-- Check instance is "Running" in EC2 console.
+**Cause:** Security group not configured or wrong IP.
 
-**"Loading model" Error (503):**
-- Model takes 60-90 seconds to load. Wait and retry.
-- Monitor with: `sudo journalctl -u nemoclaw -f`
+**Fix:**
+1. Check your EC2's current public IP in AWS Console
+2. Update security group to allow your current IP on port 8001
+3. Verify NemoClaw is running: `sudo systemctl status nemoclaw`
+</details>
 
-**CUDA Out of Memory:**
-- Reduce context size: Change `-c 32768` to `-c 16384` in service file.
+<details>
+<summary><b>❌ "Loading model" error (503)</b></summary>
 
-**Service Won't Start:**
-- Check logs: `sudo journalctl -u nemoclaw -n 50`
-- Verify model file exists: `ls -la ~/models/`
+**Cause:** Model is still loading into GPU memory.
 
-For detailed solutions, see [Troubleshooting Guide](docs/TROUBLESHOOTING.md).
+**Fix:** Wait 60-90 seconds after starting the service. Monitor with:
+```bash
+sudo journalctl -u nemoclaw -f
+# Look for: "server is listening on http://0.0.0.0:8001"
+```
+</details>
+
+<details>
+<summary><b>❌ SSH connection timeout</b></summary>
+
+**Cause:** Your IP changed since setting up security group.
+
+**Fix:**
+1. Find your current IP: https://whatismyip.com
+2. AWS Console → EC2 → Security Groups → Edit inbound rules
+3. Update SSH rule source to your current IP
+</details>
+
+<details>
+<summary><b>❌ Out of memory errors</b></summary>
+
+**Cause:** Context size too large for available VRAM.
+
+**Fix:** Reduce context size in the service file:
+```bash
+sudo nano /etc/systemd/system/nemoclaw.service
+# Change -c 32768 to -c 16384
+sudo systemctl daemon-reload
+sudo systemctl restart nemoclaw
+```
+</details>
+
+**More issues?** See the full [Troubleshooting Guide](docs/TROUBLESHOOTING.md).
 
 ---
 
-## 📊 Performance Benchmarks
+## 🗺️ Roadmap
 
-| Metric | Value |
-|--------|-------|
-| **Model** | Nemotron 3 Nano 30B (Q4_K_XL) |
-| **Total Parameters** | 31.58 billion |
-| **Active Parameters** | 3.5 billion (MoE architecture) |
-| **Inference Speed** | 120+ tokens/second |
-| **Prompt Processing** | 85+ tokens/second |
-| **GPU Memory Usage** | 21.5 GB / 24 GB |
-| **Max Context Length** | 1,048,576 tokens |
+- [x] Core NemoClaw server deployment
+- [x] OpenClaw integration guide
+- [x] Telegram bot support
+- [x] One-command installer
+- [ ] Docker containerization
+- [ ] Terraform/CloudFormation templates
+- [ ] WhatsApp setup guide
+- [ ] Discord bot guide
+- [ ] Multi-GPU support
+- [ ] Model switching (use different models)
+- [ ] Web dashboard for monitoring
+- [ ] Mobile app for server control
+
+**Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md)!
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Whether it's:
 
-Areas where help is needed:
-- Docker containerization
-- Terraform/CloudFormation templates
-- Multi-cloud support (GCP, Azure)
-- Monitoring dashboards
+- 🐛 Bug reports
+- 💡 Feature suggestions
+- 📖 Documentation improvements
+- 🔧 Code contributions
+
+Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting PRs.
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.
 
-**Model License:** Nemotron 3 Nano is released by NVIDIA under the [NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/).
+### Third-Party Licenses
+
+- **Nemotron 3 Nano**: [NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/)
+- **llama.cpp**: [MIT License](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
+- **OpenClaw**: [MIT License](https://github.com/openclaw/openclaw/blob/main/LICENSE)
 
 ---
 
 ## 🙏 Acknowledgments
 
-- [**NVIDIA**](https://www.nvidia.com/) for releasing Nemotron 3 Nano
-- [**ggerganov**](https://github.com/ggerganov) and the llama.cpp community
+This project stands on the shoulders of giants:
+
+- [**NVIDIA**](https://www.nvidia.com/) for releasing Nemotron 3 Nano as an open model
+- [**ggerganov**](https://github.com/ggerganov) for the incredible llama.cpp inference engine
 - [**Unsloth**](https://github.com/unslothai) for optimized GGUF quantizations
-- [**OpenClaw**](https://github.com/openclaw/openclaw) for the AI agent framework
+- [**OpenClaw**](https://openclaw.ai) for the brilliant AI agent framework
+- The open-source AI community for making this all possible
 
 ---
 
-<p align="center">
-  <strong>Built by <a href="https://github.com/Omsatyaswaroop29">Om Satya</a></strong>
-</p>
+## ⭐ Star History
 
-<p align="center">
-  <a href="https://github.com/Omsatyaswaroop29/nemoclaw">⭐ Star this repo</a> •
-  <a href="https://github.com/Omsatyaswaroop29/nemoclaw/issues">🐛 Report Bug</a> •
-  <a href="https://github.com/Omsatyaswaroop29/nemoclaw/issues">💡 Request Feature</a>
-</p>
+If this project helped you, consider giving it a star! It helps others discover it.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Omsatyaswaroop29/nemoclaw&type=Date)](https://star-history.com/#Omsatyaswaroop29/nemoclaw&Date)
+
+---
+
+<div align="center">
+
+### Built with ❤️ by [Om Satya](https://github.com/Omsatyaswaroop29)
+
+**Questions?** [Open an issue](https://github.com/Omsatyaswaroop29/nemoclaw/issues) • **Ideas?** [Start a discussion](https://github.com/Omsatyaswaroop29/nemoclaw/discussions)
+
+<br/>
+
+*Stop paying per token. Start owning your AI.*
+
+**[⬆ Back to Top](#-nemoclaw)**
+
+</div>
